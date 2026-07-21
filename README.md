@@ -48,13 +48,9 @@ By completing this project, you will:
 
 4. **Sync Prisma schema**
    ```bash
-   npx prisma migrate dev
+   npx prisma generate
    ```
    
-   OR if migrations aren't available:
-   ```bash
-   npx prisma db push
-   ```
 
 5. **Start the dev server**
    ```bash
@@ -237,7 +233,6 @@ This will check:
 
 ### DON'T ❌
 - Hardcode data or mock responses
-- Skip error handling
 - Query all data then filter in JavaScript
 - Use deprecated Prisma methods
 - Ignore TypeScript errors

@@ -9,9 +9,9 @@ interface ProductReport {
 
 /**
  * Challenge 3: Product Inventory Report
- * 
+ *
  * TODO: Implement this endpoint to generate a product report.
- * 
+ *
  * Requirements:
  * - Get all products
  * - Include current stock_quantity
@@ -20,27 +20,57 @@ interface ProductReport {
  * - Sort by totalSold in descending order
  * - Return format: { name, currentStock, totalSold }
  */
+
+// caching the report for a bit, products dont change that often
+let cache: { data: ProductReport[]; expires: number } | null = null;
+const CACHE_TIME = 30 * 1000;
+
 export async function GET(request: NextRequest) {
   try {
-    // TODO: Implement your solution here
-    // Step 1: Get all products with their stock
-    // Step 2: For each product, calculate total quantity sold
-    // Step 3: Aggregate sales data (sum of quantities)
-    // Step 4: Combine the data
-    // Step 5: Sort by totalSold descending
-    // Step 6: Return formatted response
+    const { searchParams } = new URL(request.url);
+    const page = Number(searchParams.get('page')) || null;
+    const limit = Number(searchParams.get('limit')) || 10;
 
-    // Hint: Consider using:
-    // - prisma.product.findMany()
-    // - prisma.sale.groupBy() with _sum aggregation
-    // - Or raw SQL for complex joins
+    if (cache && Date.now() < cache.expires && !page) {
+      return NextResponse.json(cache.data);
+    }
 
-  
-    // Remove this and implement:
-    return NextResponse.json(
-      { error: 'Challenge 3 not implemented yet' },
-      { status: 501 }
-    );
+    const products = await prisma.product.findMany({
+      include: {
+        sales: true,
+      },
+    });
+
+    const report: ProductReport[] = products.map((product) => {
+      let totalSold = 0;
+      for (const sale of product.sales) {
+        totalSold += sale.quantity;
+      }
+
+      return {
+        name: product.name,
+        currentStock: product.stockQuantity,
+        totalSold,
+      };
+    });
+
+    report.sort((a, b) => b.totalSold - a.totalSold);
+
+    // store in cache after we build it
+    cache = { data: report, expires: Date.now() + CACHE_TIME };
+
+    // i added pagination here with page + limit query params
+    if (page) {
+      const start = (page - 1) * limit;
+      return NextResponse.json({
+        data: report.slice(start, start + limit),
+        page,
+        limit,
+        total: report.length,
+      });
+    }
+
+    return NextResponse.json(report);
   } catch (error) {
     console.error('Challenge 3 Error:', error);
     return NextResponse.json(

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {prisma} from '@/lib/prisma';
- 
+import { prisma } from '@/lib/prisma';
+
 interface ConversionMetrics {
   totalLeads: number;
   convertedLeads: number;
@@ -10,9 +10,9 @@ interface ConversionMetrics {
 
 /**
  * Challenge 4: Lead Conversion Metrics (BONUS)
- * 
+ *
  * TODO: Implement this endpoint to calculate lead conversion metrics.
- * 
+ *
  * Requirements:
  * - Count total leads in the database
  * - Count leads with status "Converted"
@@ -21,25 +21,50 @@ interface ConversionMetrics {
  * - Round conversionRate to 2 decimal places
  * - Return format: { totalLeads, convertedLeads, conversionRate, averageLeadScore }
  */
+
+// no pagination here cus its just one object, but i cached it
+let cache: { data: ConversionMetrics; expires: number } | null = null;
+const CACHE_TIME = 30 * 1000;
+
 export async function GET(request: NextRequest) {
   try {
-    // TODO: Implement your solution here
-    // Step 1: Get total count of leads
-    // Step 2: Get count of converted leads (status = 'Converted')
-    // Step 3: Calculate conversion rate
-    // Step 4: Get average lead score
-    // Step 5: Return formatted response
-    
-    // Hint: Consider using:
-    // - prisma.lead.count()
-    // - prisma.lead.findMany() with where filter
-    // - prisma.lead.aggregate() for average calculation
-  
-    // Remove this and implement:
-    return NextResponse.json(
-      { error: 'Challenge 4 not implemented yet' },
-      { status: 501 }
-    );
+    if (cache && Date.now() < cache.expires) {
+      // serving from cache
+      return NextResponse.json(cache.data);
+    }
+
+    const totalLeads = await prisma.lead.count();
+
+    const convertedLeads = await prisma.lead.count({
+      where: {
+        status: 'Converted',
+      },
+    });
+
+    const avg = await prisma.lead.aggregate({
+      _avg: {
+        score: true,
+      },
+    });
+
+    let conversionRate = 0;
+    if (totalLeads > 0) {
+      conversionRate = Number(
+        ((convertedLeads / totalLeads) * 100).toFixed(2)
+      );
+    }
+
+    const metrics: ConversionMetrics = {
+      totalLeads,
+      convertedLeads,
+      conversionRate,
+      averageLeadScore: avg._avg.score ?? 0,
+    };
+
+    // cache the metrics
+    cache = { data: metrics, expires: Date.now() + CACHE_TIME };
+
+    return NextResponse.json(metrics);
   } catch (error) {
     console.error('Challenge 4 Error:', error);
     return NextResponse.json(

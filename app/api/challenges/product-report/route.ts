@@ -29,6 +29,9 @@ export async function GET(request: NextRequest) {
     // Step 4: Combine the data
     // Step 5: Sort by totalSold descending
     // Step 6: Return formatted response
+    const products = await prisma.product.findMany({
+      
+    })
 
     // Hint: Consider using:
     // - prisma.product.findMany()

@@ -7,8 +7,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-} 
-
+}
 
 model Customer {
   id        Int      @id @default(autoincrement())
@@ -18,52 +17,52 @@ model Customer {
   createdAt DateTime @default(now())
 
   // Relations
-  sales     Sale[]
-  leads     Lead[]   @relation("ConvertedToCustomer")
+  sales Sale[]
+  leads Lead[] @relation("ConvertedToCustomer")
 
   @@map("customers")
 }
 
 model Lead {
-  id                   Int       @id @default(autoincrement())
-  name                 String    @db.VarChar(100)
-  email                String?   @db.VarChar(150)
-  phone                String?   @db.VarChar(20)
-  source               String?   @db.VarChar(50)
-  status               String    @default("New") @db.VarChar(20) // 'New','Contacted','Qualified','Lost','Converted'
-  score                Int       @default(0)
-  createdAt            DateTime  @default(now())
-  convertedCustomerId  Int?
+  id                  Int      @id @default(autoincrement())
+  name                String   @db.VarChar(100)
+  email               String?  @db.VarChar(150)
+  phone               String?  @db.VarChar(20)
+  source              String?  @db.VarChar(50)
+  status              String   @default("New") @db.VarChar(20) // 'New','Contacted','Qualified','Lost','Converted'
+  score               Int      @default(0)
+  createdAt           DateTime @default(now())
+  convertedCustomerId Int?
 
   // Relations
-  convertedCustomer    Customer? @relation("ConvertedToCustomer", fields: [convertedCustomerId], references: [id])
+  convertedCustomer Customer? @relation("ConvertedToCustomer", fields: [convertedCustomerId], references: [id])
 
   @@map("leads")
 }
 
 model Product {
-  id            Int    @id @default(autoincrement())
-  name          String @db.VarChar(100)
-  stockQuantity Int    @default(0)
+  id            Int     @id @default(autoincrement())
+  name          String  @db.VarChar(100)
+  stockQuantity Int     @default(0)
   price         Decimal @db.Decimal(10, 2)
 
   // Relations
-  sales         Sale[]
+  sales Sale[]
 
   @@map("products")
 }
 
 model Sale {
-  id          Int       @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   customerId  Int
   productId   Int
   quantity    Int
-  saleDate    DateTime  @default(now())
-  totalAmount Decimal   @db.Decimal(10, 2)
+  saleDate    DateTime @default(now())
+  totalAmount Decimal  @db.Decimal(10, 2)
 
   // Relations
-  customer    Customer  @relation(fields: [customerId], references: [id])
-  product     Product   @relation(fields: [productId], references: [id])
+  customer Customer @relation(fields: [customerId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
 
   @@map("sales")
 }

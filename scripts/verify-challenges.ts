@@ -10,7 +10,7 @@
  * Usage: npx ts-node scripts/verify-challenges.ts
  */
 
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
 
 interface TestResult {
   challenge: number;
